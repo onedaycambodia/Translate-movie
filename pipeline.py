@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 DATA = Path(os.getenv("DATA_DIR", "/tmp/data"))
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
 
 # Voice profiles: Edge TTS only has 2 Khmer voices, so age/gender is shaped with pitch + rate.
 PROFILES = {
@@ -97,7 +97,7 @@ def translate(segs, progress):
         batch = segs[i:i + B]
         enc = tok([s["zh"] for s in batch], return_tensors="pt", padding=True, truncation=True, max_length=256)
         with torch.no_grad():
-            out = mdl.generate(**enc, forced_bos_token_id=bos, num_beams=4, max_new_tokens=256)
+            out = mdl.generate(**enc, forced_bos_token_id=bos, num_beams=int(os.getenv("NLLB_BEAMS", "2")), max_new_tokens=256)
         for s, t in zip(batch, tok.batch_decode(out, skip_special_tokens=True)):
             s["km"] = t.strip()
         progress(min(1.0, (i + B) / len(segs)))
@@ -150,6 +150,7 @@ def analyze(job, save):
     video, wav = d / "input.mp4", d / "speech16k.wav"
 
     def step(stage, p, msg):
+        print(f"[{job['id']}] {stage} {int(p*100)}% {msg}", flush=True)
         job.update(stage=stage, progress=p, message=msg)
         save(job)
 
