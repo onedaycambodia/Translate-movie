@@ -20,6 +20,23 @@ PROFILES = {
 }
 
 
+def cpu_limit():
+    """CPUs this container may really use (os.cpu_count() shows the whole host -> thread storm)."""
+    n = None
+    try:
+        q, per = open("/sys/fs/cgroup/cpu.max").read().split()
+        if q != "max":
+            n = max(1, int(int(q) / int(per)))
+    except Exception:
+        pass
+    if n is None:
+        try:
+            n = len(os.sched_getaffinity(0))
+        except Exception:
+            n = os.cpu_count() or 2
+    return max(1, min(n, int(os.getenv("MAX_THREADS", "8"))))
+
+
 def run(cmd):
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
@@ -39,7 +56,7 @@ def transcribe(wav, language):
     global _whisper
     from faster_whisper import WhisperModel
     if _whisper is None:
-        _whisper = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8",
+        _whisper = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8", cpu_threads=cpu_limit(),
                                 download_root=str(DATA / "whisper"))
     segs, _ = _whisper.transcribe(str(wav), language=None if language == "auto" else language,
                                   vad_filter=True, beam_size=5)
@@ -83,7 +100,10 @@ def load_nllb():
         name = os.getenv("NLLB_MODEL", "facebook/nllb-200-distilled-600M")
         tok = AutoTokenizer.from_pretrained(name, src_lang="zho_Hans")
         mdl = AutoModelForSeq2SeqLM.from_pretrained(name).eval()
-        torch.set_num_threads(os.cpu_count() or 2)
+        torch.set_num_threads(cpu_limit())
+        if os.getenv("NLLB_QUANT") == "1":  # faster on CPU, slightly lower quality
+            mdl = torch.quantization.quantize_dynamic(mdl, {torch.nn.Linear}, dtype=torch.qint8)
+        print(f"NLLB loaded, threads={cpu_limit()}", flush=True)
         _nllb = (tok, mdl)
     return _nllb
 
@@ -92,14 +112,17 @@ def translate(segs, progress):
     import torch
     tok, mdl = load_nllb()
     bos = tok.convert_tokens_to_ids("khm_Khmr")
+    import time
     B = 8
     for i in range(0, len(segs), B):
+        t0 = time.time()
         batch = segs[i:i + B]
         enc = tok([s["zh"] for s in batch], return_tensors="pt", padding=True, truncation=True, max_length=256)
         with torch.no_grad():
             out = mdl.generate(**enc, forced_bos_token_id=bos, num_beams=int(os.getenv("NLLB_BEAMS", "2")), max_new_tokens=256)
         for s, t in zip(batch, tok.batch_decode(out, skip_special_tokens=True)):
             s["km"] = t.strip()
+        print(f"translated {min(i + B, len(segs))}/{len(segs)} in {time.time() - t0:.1f}s", flush=True)
         progress(min(1.0, (i + B) / len(segs)))
 
 
