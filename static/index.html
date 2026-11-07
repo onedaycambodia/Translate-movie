@@ -127,14 +127,15 @@ drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==='Enter')fi.click()};
 drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0])});
 fi.onchange=()=>fi.files[0]&&upload(fi.files[0]);
 function upload(f){
-  $('#uperr').textContent='';const bar=$('#upbar');bar.hidden=false;
+  $('#uperr').textContent='';
+  if(f.size>1000*1024*1024){$('#uperr').textContent=`ឯកសារនេះធំ ${(f.size/1073741824).toFixed(1)} GB ធំពេក (អតិបរមា ១ GB) សូមបង្រួមវីដេអូមុន`;return}const bar=$('#upbar');bar.hidden=false;
   const fd=new FormData();fd.append('file',f);fd.append('language',$('#lang').value);
   const x=new XMLHttpRequest();x.open('POST','/api/jobs');
   x.upload.onprogress=e=>bar.firstElementChild.style.width=(e.loaded/e.total*100)+'%';
   x.onload=()=>{bar.hidden=true;
-    if(x.status!==200){let m='Upload បរាជ័យ';try{m=JSON.parse(x.responseText).detail||m}catch{}$('#uperr').textContent=m;return}
+    if(x.status!==200){let m=`Upload បរាជ័យ (កូដ ${x.status})`;try{m=JSON.parse(x.responseText).detail||m}catch{m+=' '+x.responseText.replace(/<[^>]*>/g,' ').slice(0,120)}$('#uperr').textContent=m;return}
     job={id:JSON.parse(x.responseText).id};localStorage.jid=job.id;show('prog');poll()};
-  x.onerror=()=>{bar.hidden=true;$('#uperr').textContent='បញ្ហាបណ្តាញ'};
+  x.onerror=()=>{bar.hidden=true;$('#uperr').textContent='បញ្ហាបណ្តាញ ឬ server មិនឆ្លើយតប'};
   x.send(fd);
 }
 
