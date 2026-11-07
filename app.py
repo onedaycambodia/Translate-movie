@@ -11,6 +11,7 @@ import pipeline
 from pipeline import DATA, PROFILES
 
 MAX_SECONDS = int(os.getenv("MAX_SECONDS", "600"))
+MAX_MB = int(os.getenv("MAX_MB", "1000"))
 JOBS_DIR = DATA / "jobs"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 app = FastAPI(title="Khmer Dubber")
@@ -43,6 +44,9 @@ def purge(force=False):
     for d in JOBS_DIR.iterdir():
         j = JOBS.get(d.name)
         if j and j.get("status") in ACTIVE:
+            continue
+        if not (d / "job.json").exists() and now - d.stat().st_mtime > 600:
+            shutil.rmtree(d, ignore_errors=True)  # orphan from a failed upload
             continue
         if force or now - d.stat().st_mtime > TTL:
             shutil.rmtree(d, ignore_errors=True)
@@ -87,8 +91,15 @@ async def create(file: UploadFile = File(...), language: str = Form("zh")):
     try:
         d.mkdir(parents=True)
         with open(d / "input.mp4", "wb") as f:
+            size = 0
             while chunk := await file.read(1 << 20):
+                size += len(chunk)
+                if size > MAX_MB * 1024 * 1024:
+                    raise HTTPException(413, f"ឯកសារធំពេក (លើស {MAX_MB} MB) សូមបង្រួមវីដេអូមុន")
                 f.write(chunk)
+    except HTTPException:
+        shutil.rmtree(d, ignore_errors=True)
+        raise
     except Exception as e:
         traceback.print_exc()
         shutil.rmtree(d, ignore_errors=True)
