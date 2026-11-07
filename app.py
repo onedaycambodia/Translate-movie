@@ -32,6 +32,32 @@ for p in JOBS_DIR.glob("*/job.json"):
         pass
 
 
+TTL = float(os.getenv("JOB_TTL_HOURS", "12")) * 3600
+ACTIVE = ("analyzing", "rendering", "queued")
+
+
+def purge(force=False):
+    """Delete old jobs (or all idle jobs when disk is low) so the volume never fills up."""
+    import time
+    now = time.time()
+    for d in JOBS_DIR.iterdir():
+        j = JOBS.get(d.name)
+        if j and j.get("status") in ACTIVE:
+            continue
+        if force or now - d.stat().st_mtime > TTL:
+            shutil.rmtree(d, ignore_errors=True)
+            JOBS.pop(d.name, None)
+    for f in DATA.glob("prev_*.mp3"):
+        f.unlink(missing_ok=True)
+
+
+def low_disk():
+    return shutil.disk_usage(DATA).free < 1.5 * 1024**3
+
+
+purge()
+
+
 def get(jid):
     if jid not in JOBS:
         raise HTTPException(404, "រកមិនឃើញការងារ")
@@ -55,12 +81,19 @@ def profiles():
 
 @app.post("/api/jobs")
 async def create(file: UploadFile = File(...), language: str = Form("zh")):
+    purge(force=low_disk())
     jid = uuid.uuid4().hex[:10]
     d = JOBS_DIR / jid
-    d.mkdir(parents=True)
-    with open(d / "input.mp4", "wb") as f:
-        while chunk := await file.read(1 << 20):
-            f.write(chunk)
+    try:
+        d.mkdir(parents=True)
+        with open(d / "input.mp4", "wb") as f:
+            while chunk := await file.read(1 << 20):
+                f.write(chunk)
+    except Exception as e:
+        traceback.print_exc()
+        shutil.rmtree(d, ignore_errors=True)
+        msg = "ទំហំ Volume ពេញ សូមបង្កើនទំហំ Volume ក្នុង Railway" if "No space" in str(e) else str(e)
+        raise HTTPException(500, f"រក្សាទុកឯកសារមិនបាន: {msg}")
     try:
         dur = pipeline.probe_duration(d / "input.mp4")
     except Exception:

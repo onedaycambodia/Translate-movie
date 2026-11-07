@@ -168,6 +168,7 @@ def analyze(job, save):
     speakers = assign_speakers(segs)
     job["segments"] = [dict(id=i, **s) for i, s in enumerate(segs)]
     job["speakers"] = {k: dict(profile=v) for k, v in speakers.items()}
+    wav.unlink(missing_ok=True)
     job.update(status="review", stage="review", progress=1.0, message="រួចរាល់ សូមពិនិត្យ និងកែ")
     save(job)
 
@@ -263,5 +264,9 @@ def render(job, save):
     else:
         run(["ffmpeg", "-y", "-i", str(d / "input.mp4"), "-i", str(d / "mix.wav"), "-map", "0:v:0", "-map", "1:a:0",
              "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(out)])
+    import shutil
+    shutil.rmtree(d / "tts", ignore_errors=True)
+    for n in ("orig.wav", "mix.wav"):
+        (d / n).unlink(missing_ok=True)
     job.update(status="done", stage="done", progress=1.0, message="រួចរាល់!")
     save(job)
