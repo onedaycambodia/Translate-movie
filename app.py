@@ -59,6 +59,18 @@ def low_disk():
     return shutil.disk_usage(DATA).free < 1.5 * 1024**3
 
 
+def clean_models():
+    """Remove cached models we no longer use (e.g. a big NLLB variant that was tried before)."""
+    keep = "models--" + os.getenv("NLLB_MODEL", "facebook/nllb-200-distilled-600M").replace("/", "--")
+    hub = DATA / "hf" / "hub"
+    if hub.exists():
+        for d in hub.glob("models--*"):
+            if d.name != keep:
+                shutil.rmtree(d, ignore_errors=True)
+                print("removed unused model cache", d.name, flush=True)
+
+
+clean_models()
 purge()
 
 
@@ -177,6 +189,18 @@ def file(jid: str, kind: str, dl: int = 0):
         raise HTTPException(404, "មិនមានឯកសារ")
     n, mt = names[kind]
     return FileResponse(JOBS_DIR / jid / n, media_type=mt, filename=f"khmer-dub-{jid}-{n}" if dl else None)
+
+
+@app.get("/api/disk")
+def disk():
+    def size(p):
+        return sum(f.stat().st_size for f in Path(p).rglob("*") if f.is_file())
+    u = shutil.disk_usage(DATA)
+    out = {"total_gb": round(u.total / 1e9, 2), "free_gb": round(u.free / 1e9, 2),
+           "NLLB_MODEL": os.getenv("NLLB_MODEL", "(default 600M)"), "WHISPER_MODEL": pipeline.WHISPER_MODEL}
+    for d in sorted(DATA.iterdir()):
+        out[d.name] = round((size(d) if d.is_dir() else d.stat().st_size) / 1e9, 3)
+    return out
 
 
 @app.get("/health")
