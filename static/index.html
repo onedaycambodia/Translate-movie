@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="km">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ស្ទូឌីយ៉ូដាក់សំឡេងខ្មែរ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;700&family=Moul&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0E1A2B;--panel:#15263B;--panel2:#1B3149;--line:#2A4766;--text:#E9EEF5;--muted:#8FA3BA;--gold:#F0B44C;--bad:#F08A8A;
+--sp0:#F0B44C;--sp1:#E8708A;--sp2:#5FC3B0;--sp3:#7FA7F5;--sp4:#C58BF2;--sp5:#F08A5D}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--text);font:400 16px/1.7 "Kantumruy Pro","Noto Sans Khmer",system-ui,sans-serif;min-height:100vh}
+header{padding:28px 20px 8px;max-width:1200px;margin:auto}
+h1{font:400 clamp(22px,4vw,34px)/1.5 Moul,serif;margin:0;color:var(--gold)}
+header p{margin:4px 0 0;color:var(--muted)}
+main{max-width:1200px;margin:auto;padding:16px 20px 80px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+button,select,textarea{font:inherit;color:inherit}
+.btn{background:var(--gold);color:#241a05;border:0;border-radius:10px;padding:12px 22px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* upload */
+#drop{border:2px dashed var(--line);border-radius:18px;padding:56px 20px;text-align:center;cursor:pointer;transition:.15s}
+#drop.over{border-color:var(--gold);background:var(--panel)}
+#drop b{display:block;font-size:20px;margin-bottom:6px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--text);font:inherit;min-width:0;flex:1}
+select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.bar{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:14px 0 6px}
+.bar i{display:block;height:100%;width:0;background:var(--gold);transition:width .4s}
+.muted{color:var(--muted)}.err{color:var(--bad)}
+/* studio */
+.studio{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:860px){.studio{grid-template-columns:1fr}}
+.left{position:sticky;top:12px;display:grid;gap:12px}
+@media(max-width:860px){.left{position:static}}
+.vwrap{position:relative;border-radius:12px;overflow:hidden;background:#000}
+video{width:100%;display:block;max-height:60vh}
+#ovl{position:absolute;left:8px;right:8px;bottom:44px;text-align:center;font-weight:700;text-shadow:0 0 4px #000,0 0 4px #000;pointer-events:none}
+#tl{position:relative;height:30px;background:var(--panel2);border-radius:8px;overflow:hidden;cursor:pointer}
+#tl i{position:absolute;top:4px;bottom:4px;border-radius:4px;opacity:.9}
+#tl u{position:absolute;top:0;bottom:0;width:2px;background:#fff}
+.spk{display:grid;gap:10px;margin-bottom:18px}
+.sc{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:10px 14px;flex-wrap:wrap}
+.sc strong{min-width:34px}.sc .n{color:var(--muted);font-size:14px;flex:1}
+.line{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.line.act{background:var(--panel2);border-color:var(--gold);border-left-color:var(--c)}
+.line .t{color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline dotted}
+.line .zh{color:var(--muted);font-size:14px}
+.line textarea{grid-column:1/-1;width:100%;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical;min-height:48px}
+.line .ctl{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.play{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 12px;cursor:pointer}
+.dock{position:fixed;left:0;right:0;bottom:0;background:rgba(14,26,43,.96);border-top:1px solid var(--line);padding:12px 20px;display:none}
+.dock.on{display:block}
+.dock .in{max-width:1200px;margin:auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.dock label{display:flex;gap:8px;align-items:center;font-size:14px}
+h2{font-size:18px;margin:0 0 10px}
+.dl{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+a.btn{text-decoration:none;display:inline-block}
+</style>
+</head>
+<body>
+<header><h1>ស្ទូឌីយ៉ូដាក់សំឡេងខ្មែរ</h1><p>ប្រែរឿងចិនជាខ្មែរ ដោយសំឡេងផ្សេងគ្នាតាមអាយុតួអង្គ</p></header>
+<main>
+ <section id="v-upload" class="view on">
+  <div class="card">
+   <div id="drop" tabindex="0"><b>ទម្លាក់វីដេអូនៅទីនេះ ឬចុចដើម្បីជ្រើស</b><span class="muted">វីដេអូភាសាចិន រហូតដល់ ៥-១០ នាទី</span></div>
+   <input id="file" type="file" accept="video/*" hidden>
+   <div class="row"><span>ភាសាក្នុងវីដេអូ</span>
+    <select id="lang"><option value="zh">ចិន (Mandarin)</option><option value="auto">ស្វ័យប្រវត្តិ</option></select></div>
+   <div class="bar" id="upbar" hidden><i></i></div>
+   <p id="uperr" class="err"></p>
+  </div>
+ </section>
+
+ <section id="v-prog" class="view">
+  <div class="card"><h2 id="pmsg">កំពុងដំណើរការ</h2><div class="bar"><i id="pbar"></i></div>
+   <p class="muted" id="psub">វីដេអូ ៥ នាទី ប្រើពេលប្រហែល ២-៥ នាទី សូមកុំបិទទំព័រ</p><p id="perr" class="err"></p>
+   <button class="btn ghost" id="again" hidden>ចាប់ផ្តើមម្តងទៀត</button></div>
+ </section>
+
+ <section id="v-studio" class="view">
+  <div class="studio">
+   <div class="left">
+    <div class="vwrap"><video id="vid" controls playsinline></video><div id="ovl"></div></div>
+    <div id="tl" title="ចុចដើម្បីរំលង"></div>
+    <div class="muted" style="font-size:13px">បន្ទះពណ៌ = អ្នកនិយាយម្នាក់ៗតាមពេលវេលា</div>
+   </div>
+   <div>
+    <h2>អ្នកនិយាយ</h2><div class="spk" id="spk"></div>
+    <h2>ឃ្លាបកប្រែ <span class="muted" id="cnt"></span></h2>
+    <div class="row" style="margin:0 0 12px"><input id="fnd" placeholder="ពាក្យដែលត្រូវរក (ឧ. ឈ្មោះខុស)"><input id="rep" placeholder="ជំនួសដោយ"><button class="play" id="repb">ជំនួសទាំងអស់</button><span class="muted" id="repm"></span></div>
+    <div id="lines"></div>
+   </div>
+  </div>
+ </section>
+
+ <section id="v-done" class="view">
+  <div class="card"><h2>វីដេអូដាក់សំឡេងខ្មែរ រួចរាល់</h2>
+   <video id="outv" controls playsinline style="width:100%;max-height:70vh;border-radius:12px;background:#000"></video>
+   <div class="dl"><a class="btn" id="dlv">ទាញយកវីដេអូ</a><a class="btn ghost" id="dla">សំឡេង MP3</a><a class="btn ghost" id="dls">ទាញយក Subtitle (.srt)</a>
+    <button class="btn ghost" id="back">កែបន្ថែម</button><button class="btn ghost" id="new">វីដេអូថ្មី</button></div></div>
+ </section>
+</main>
+
+<div class="dock" id="dock"><div class="in">
+ <label>សំឡេងដើម <input type="range" id="bg" min="0" max="40" value="12"> <span id="bgv">12%</span></label>
+ <label><input type="checkbox" id="burn"> បោះពុម្ព subtitle ខ្មែរលើវីដេអូ</label>
+ <button class="btn" id="render" style="margin-left:auto">បង្កើតវីដេអូខ្មែរ</button>
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s), COL=i=>`var(--sp${i%6})`;
+let job=null, PROF={}, timer=null, saveT=null, busy=null;
+const views=['upload','prog','studio','done'];
+function show(v){views.forEach(x=>$('#v-'+x).classList.toggle('on',x===v));$('#dock').classList.toggle('on',v==='studio')}
+const fmt=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+
+// upload
+const drop=$('#drop'),fi=$('#file');
+drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==='Enter')fi.click()};
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0])});
+fi.onchange=()=>fi.files[0]&&upload(fi.files[0]);
+function upload(f){
+  $('#uperr').textContent='';const bar=$('#upbar');bar.hidden=false;
+  const fd=new FormData();fd.append('file',f);fd.append('language',$('#lang').value);
+  const x=new XMLHttpRequest();x.open('POST','/api/jobs');
+  x.upload.onprogress=e=>bar.firstElementChild.style.width=(e.loaded/e.total*100)+'%';
+  x.onload=()=>{bar.hidden=true;
+    if(x.status!==200){let m='Upload បរាជ័យ';try{m=JSON.parse(x.responseText).detail||m}catch{}$('#uperr').textContent=m;return}
+    job={id:JSON.parse(x.responseText).id};localStorage.jid=job.id;show('prog');poll()};
+  x.onerror=()=>{bar.hidden=true;$('#uperr').textContent='បញ្ហាបណ្តាញ'};
+  x.send(fd);
+}
+
+// polling
+async function poll(){
+  clearTimeout(timer);
+  const r=await fetch('/api/jobs/'+job.id);
+  if(!r.ok){localStorage.removeItem('jid');show('upload');return}
+  job=await r.json();
+  if(job.status==='analyzing'||job.status==='rendering'||job.status==='queued'){
+    show('prog');$('#pmsg').textContent=job.message;$('#pbar').style.width=(job.progress*100)+'%';
+    $('#perr').textContent='';$('#again').hidden=true;timer=setTimeout(poll,1500);
+  }else if(job.status==='error'){
+    show('prog');$('#pmsg').textContent='មានបញ្ហា';$('#perr').textContent=job.error||'';$('#again').hidden=false;
+  }else if(job.status==='review'){buildStudio();show('studio')}
+  else if(job.status==='done'){showDone()}
+}
+$('#again').onclick=()=>{if(job.segments&&job.segments.length){buildStudio();show('studio')}else{localStorage.removeItem('jid');show('upload')}};
+
+// studio
+const spIds=()=>Object.keys(job.speakers);
+function buildStudio(){
+  $('#vid').src=`/api/jobs/${job.id}/file/input`;
+  const ids=spIds();
+  $('#spk').innerHTML='';
+  ids.forEach((id,i)=>{
+    const n=job.segments.filter(s=>s.speaker===id).length;
+    const d=document.createElement('div');d.className='sc';d.style.setProperty('--c',COL(i));
+    d.innerHTML=`<strong>${id}</strong><select data-s="${id}">${Object.entries(PROF).map(([k,v])=>`<option value="${k}" ${job.speakers[id].profile===k?'selected':''}>${v}</option>`).join('')}</select>
+     <button class="play" data-t="${id}">▶ សាកសំឡេង</button><span class="n">${n} ឃ្លា</span>`;
+    $('#spk').appendChild(d);
+  });
+  $('#spk').querySelectorAll('select').forEach(s=>s.onchange=()=>{job.speakers[s.dataset.s].profile=s.value;queueSave()});
+  $('#spk').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.t,seg=job.segments.find(s=>s.speaker===id&&s.km);
+    preview(seg?seg.km:'សួស្តី នេះគឺជាសំឡេងសាកល្បង',job.speakers[id].profile,b)});
+  const L=$('#lines');L.innerHTML='';
+  job.segments.forEach((s,k)=>{
+    const d=document.createElement('div');d.className='line';d.id='l'+k;d.style.setProperty('--c',COL(ids.indexOf(s.speaker)));
+    d.innerHTML=`<span class="t" data-k="${k}">${fmt(s.start)}</span><span class="zh">${esc(s.zh)}</span>
+     <textarea rows="2">${esc(s.km)}</textarea>
+     <div class="ctl"><select>${ids.map(i=>`<option ${i===s.speaker?'selected':''}>${i}</option>`).join('')}</select>
+     <button class="play">▶ ស្តាប់</button></div>`;
+    const ta=d.querySelector('textarea'),sel=d.querySelector('select');
+    ta.oninput=()=>{s.km=ta.value;queueSave()};
+    sel.onchange=()=>{s.speaker=sel.value;d.style.setProperty('--c',COL(ids.indexOf(s.speaker)));queueSave();drawTL()};
+    d.querySelector('.t').onclick=()=>{$('#vid').currentTime=s.start;$('#vid').play()};
+    d.querySelector('.play').onclick=e=>preview(s.km,job.speakers[s.speaker].profile,e.target);
+    L.appendChild(d);
+  });
+  $('#cnt').textContent=`(${job.segments.length})`;drawTL();
+}
+const esc=t=>(t||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function drawTL(){
+  const T=$('#tl'),D=job.duration,ids=spIds();T.innerHTML='';
+  job.segments.forEach((s,k)=>{const i=document.createElement('i');
+    i.style.left=(s.start/D*100)+'%';i.style.width=Math.max(.4,(s.end-s.start)/D*100)+'%';i.style.background=COL(ids.indexOf(s.speaker));T.appendChild(i)});
+  const u=document.createElement('u');u.id='head';T.appendChild(u);
+}
+$('#tl').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();$('#vid').currentTime=(e.clientX-r.left)/r.width*job.duration};
+$('#vid').ontimeupdate=()=>{
+  const t=$('#vid').currentTime,h=$('#head');if(h)h.style.left=(t/job.duration*100)+'%';
+  const k=job.segments.findIndex(s=>t>=s.start&&t<=s.end);
+  document.querySelectorAll('.line.act').forEach(x=>x.classList.remove('act'));
+  $('#ovl').textContent=k>=0?job.segments[k].km:'';
+  if(k>=0){const el=$('#l'+k);el.classList.add('act');if(!el.matches(':hover'))el.scrollIntoView({block:'nearest',behavior:'smooth'})}
+};
+function queueSave(){clearTimeout(saveT);saveT=setTimeout(saveNow,700)}
+function saveNow(){return fetch('/api/jobs/'+job.id,{method:'PUT',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({segments:job.segments,speakers:job.speakers})})}
+async function preview(text,profile,btn){
+  if(!text.trim())return;const o=btn.textContent;btn.textContent='…';
+  try{const r=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,profile})});
+    if(!r.ok)throw 0;const a=new Audio(URL.createObjectURL(await r.blob()));a.play()}catch{alert('បង្កើតសំឡេងមិនបាន សូមព្យាយាមម្តងទៀត')}
+  btn.textContent=o;
+}
+$('#bg').oninput=e=>$('#bgv').textContent=e.target.value+'%';
+$('#render').onclick=async()=>{
+  $('#render').disabled=true;await saveNow();
+  await fetch(`/api/jobs/${job.id}/render`,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({bg:$('#bg').value/100,burn:$('#burn').checked})});
+  $('#render').disabled=false;show('prog');poll();
+};
+
+$('#repb').onclick=()=>{const f=$('#fnd').value,r=$('#rep').value;if(!f)return;let n=0;
+  job.segments.forEach(s=>{if(s.km.includes(f)){n+=s.km.split(f).length-1;s.km=s.km.split(f).join(r)}});
+  $('#repm').textContent=`បានជំនួស ${n} កន្លែង`;saveNow().then(buildStudio)};
+// done
+function showDone(){
+  const b=`/api/jobs/${job.id}/file/`;$('#outv').src=b+'video';
+  $('#dlv').href=b+'video?dl=1';$('#dla').href=b+'mp3?dl=1';$('#dls').href=b+'srt?dl=1';show('done');
+}
+$('#back').onclick=()=>{buildStudio();show('studio')};
+$('#new').onclick=()=>{localStorage.removeItem('jid');job=null;show('upload')};
+
+(async()=>{
+  PROF=await (await fetch('/api/profiles')).json();
+  if(localStorage.jid){job={id:localStorage.jid};poll()}
+})();
+</script>
+</body>
+</html>
